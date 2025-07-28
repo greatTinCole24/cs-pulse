@@ -17,4 +17,12 @@ npm run dev
 npm run build
 ```
 
+## Environment variables
+
+The `/api/analyze` endpoint uses OpenAI and requires the following variable:
+
+| Variable | Purpose |
+| --- | --- |
+| `OPENAI_API_KEY` | Token used to authenticate requests to OpenAI. |
+
 For more information and support, please contact Base44 support at app@base44.com.
