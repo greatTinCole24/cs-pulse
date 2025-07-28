@@ -27,66 +27,24 @@ export default function VideoUploadForm({ onSuccess, onCancel }) {
   });
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
   const [uploadStatus, setUploadStatus] = useState('');
 
-  const generateMockAnalysis = (playerName, team, mapName) => {
-    // Generate realistic mock data for demonstration
-    const kills = Math.floor(Math.random() * 15) + 10; // 10-25 kills
-    const deaths = Math.floor(Math.random() * 10) + 5; // 5-15 deaths
-    const assists = Math.floor(Math.random() * 8) + 2; // 2-10 assists
-    const headshots = Math.floor(kills * (0.3 + Math.random() * 0.4)); // 30-70% of kills
-    const damage = Math.floor(Math.random() * 1500) + 1000; // 1000-2500 damage
-    const accuracy = Math.floor(Math.random() * 30) + 40; // 40-70% accuracy
-    
-    const suggestions = [
-      "Focus on crosshair placement to improve pre-aiming common angles",
-      "Work on utility timing - coordinate smokes with team pushes",
-      "Practice counter-strafing for better accuracy during peeks",
-      "Improve positioning on retakes - use cover more effectively",
-      "Develop better game sense for rotation timing"
-    ];
-
-    const weapons = ['AK-47', 'M4A4', 'AWP', 'USP-S', 'Glock-18', 'Deagle', 'MP9', 'FAMAS'];
-    const killTypes = ['headshot', 'body_shot', 'wallbang', 'through_smoke'];
-    const deathCauses = ['AK-47', 'AWP', 'M4A4', 'HE Grenade', 'Molotov', 'Knife']; // Added death causes
-    
-    const kill_events = Array.from({ length: kills }, () => ({
-      timestamp: Math.floor(Math.random() * 1800), // 0-30 minutes in seconds
-      weapon: weapons[Math.floor(Math.random() * weapons.length)],
-      kill_type: killTypes[Math.floor(Math.random() * killTypes.length)],
-      location: {
-        x: Math.floor(Math.random() * 100), // X coordinate (0-99)
-        y: Math.floor(Math.random() * 100)  // Y coordinate (0-99)
-      }
-    }));
-
-    const death_events = Array.from({ length: deaths }, () => ({ // Added death events
-      timestamp: Math.floor(Math.random() * 1800),
-      cause_of_death: deathCauses[Math.floor(Math.random() * deathCauses.length)],
-      location: {
-        x: Math.floor(Math.random() * 100),
-        y: Math.floor(Math.random() * 100)
-      }
-    }));
-
-    return {
-      kills,
-      deaths,
-      assists,
-      headshots,
-      damage_dealt: damage,
-      accuracy,
-      utility_usage: {
-        grenades_thrown: Math.floor(Math.random() * 5) + 2,
-        flashes_thrown: Math.floor(Math.random() * 6) + 3,
-        smokes_thrown: Math.floor(Math.random() * 3) + 1
+  const analyzeVideo = async (fileUrl) => {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
       },
-      improvement_suggestions: suggestions.slice(0, Math.floor(Math.random() * 3) + 3),
-      match_duration: Math.floor(Math.random() * 20) + 25, // 25-45 minutes
-      kill_events,
-      death_events // Added death_events to the return object
-    };
+      body: JSON.stringify({ video_url: fileUrl })
+    });
+
+    if (!response.ok) {
+      throw new Error('Analysis request failed');
+    }
+
+    return await response.json();
   };
 
   const validateFile = (selectedFile) => {
@@ -137,19 +95,12 @@ export default function VideoUploadForm({ onSuccess, onCancel }) {
     try {
       // Upload the file first
       const { file_url } = await UploadFile({ file });
-      
-      let analysisData;
-      
-      // Check if we can do AI analysis or use mock data
-      const fileExtension = file.name.split('.').pop().toLowerCase();
-      if (SUPPORTED_FORMATS.includes(fileExtension)) {
-        // For supported formats, we would normally call InvokeLLM
-        // For now, we'll generate mock data to avoid the error
-        analysisData = generateMockAnalysis(formData.player_name, formData.team, formData.map_name);
-      } else {
-        // For unsupported formats, generate mock data
-        analysisData = generateMockAnalysis(formData.player_name, formData.team, formData.map_name);
-      }
+
+      setIsUploading(false);
+      setIsAnalyzing(true);
+
+      // Request analysis from backend
+      const analysisData = await analyzeVideo(file_url);
 
       // Save the analysis
       await VideoAnalysis.create({
@@ -161,10 +112,12 @@ export default function VideoUploadForm({ onSuccess, onCancel }) {
 
       onSuccess();
     } catch (error) {
-      console.error("Upload failed:", error);
-      setError("Upload failed. Please try again with a smaller file or different format.");
+      console.error("Analysis failed:", error);
+      setError("Analysis failed. Please try again later.");
+    } finally {
+      setIsUploading(false);
+      setIsAnalyzing(false);
     }
-    setIsUploading(false);
   };
 
   return (
@@ -319,20 +272,25 @@ export default function VideoUploadForm({ onSuccess, onCancel }) {
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                disabled={isUploading}
+                disabled={isUploading || isAnalyzing}
                 className="border-slate-600 text-slate-300 hover:bg-slate-700"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={isUploading || !file}
+                disabled={isUploading || isAnalyzing || !file}
                 className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
               >
                 {isUploading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
+                    Uploading...
+                  </>
+                ) : isAnalyzing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Analyzing...
                   </>
                 ) : (
                   <>
