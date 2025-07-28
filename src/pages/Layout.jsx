@@ -11,7 +11,8 @@ import {
   Users,
   Zap,
   Database,
-  ShieldAlert
+  ShieldAlert,
+  UserPlus
 } from "lucide-react";
 import {
   Sidebar,
@@ -53,6 +54,11 @@ const navigationItems = [
     title: "Global Database",
     url: createPageUrl("GlobalDatabase"),
     icon: Database,
+  },
+  {
+    title: "Recruiter Analytics",
+    url: createPageUrl("RecruiterAnalytics"),
+    icon: UserPlus,
   }
 ];
 

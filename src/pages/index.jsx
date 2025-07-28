@@ -13,6 +13,7 @@ import TeamAnalytics from "./TeamAnalytics";
 import AnalysisDetail from "./AnalysisDetail";
 
 import ScoutingReport from "./ScoutingReport";
+import RecruiterAnalytics from "./RecruiterAnalytics";
 
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -27,11 +28,13 @@ const PAGES = {
     GlobalDatabase: GlobalDatabase,
     
     TeamAnalytics: TeamAnalytics,
-    
+
     AnalysisDetail: AnalysisDetail,
-    
+
     ScoutingReport: ScoutingReport,
-    
+
+    RecruiterAnalytics: RecruiterAnalytics,
+
 }
 
 function _getCurrentPage(url) {
@@ -72,7 +75,9 @@ function PagesContent() {
                 <Route path="/AnalysisDetail" element={<AnalysisDetail />} />
                 
                 <Route path="/ScoutingReport" element={<ScoutingReport />} />
-                
+
+                <Route path="/RecruiterAnalytics" element={<RecruiterAnalytics />} />
+
             </Routes>
         </Layout>
     );
