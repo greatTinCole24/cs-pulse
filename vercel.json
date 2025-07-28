@@ -1,10 +1,11 @@
 {
+  "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
   "functions": {
     "api/**/*.py": {
-      "runtime": "python3.11"
+      "runtime": "vercel-python@3.1.0"
     }
   }
 }
